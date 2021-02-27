@@ -2,7 +2,7 @@
 
 #Space Engineers server script by 7thCore
 #If you do not know what any of these settings are you are better off leaving them alone. One thing might brake the other if you fiddle around with it.
-export VERSION="202012090456"
+export VERSION="202102272132"
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
