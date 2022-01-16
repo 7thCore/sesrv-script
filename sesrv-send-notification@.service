@@ -1,0 +1,6 @@
+[Unit]
+Description=SeSrv Script Send Email notification Service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sesrv-script send_notification_crash %i
