@@ -2,10 +2,9 @@
 
 #Space Engineers server script by 7thCore
 #If you do not know what any of these settings are you are better off leaving them alone. One thing might brake the other if you fiddle around with it.
-export VERSION="202201162254"
+export VERSION="202201170047"
 
 #Basics
-USER=$(whoami)
 NAME="SeSrv" #Name of the tmux session
 
 #Server configuration
