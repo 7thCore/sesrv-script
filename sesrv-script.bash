@@ -1504,15 +1504,10 @@ script_install_email() {
 	echo ""
 	read -p "Enable email notifications (y/n): " INSTALL_EMAIL_ENABLE
 	if [[ "$INSTALL_EMAIL_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-		read -p "Is postfix already configured on your system? (y/n): " INSTALL_EMAIL_CONFIGURED
 		echo ""
-		read -p "Enter your email address for the server (example: example@gmail.com): " INSTALL_EMAIL_SENDER
+		read -p "Enter the email that will send the notifications (example: sender@gmail.com): " INSTALL_EMAIL_SENDER
 		echo ""
-		if [[ "$INSTALL_EMAIL_CONFIGURED" =~ ^([nN][oO]|[nN])$ ]]; then
-			read -p "Enter your password for $INSTALL_EMAIL_SENDER : " INSTALL_EMAIL_SENDER_PSW
-		fi
-		echo ""
-		read -p "Enter the email that will recieve the notifications (example: example2@gmail.com): " INSTALL_EMAIL_RECIPIENT
+		read -p "Enter the email that will recieve the notifications (example: recipient@gmail.com): " INSTALL_EMAIL_RECIPIENT
 		echo ""
 		read -p "Email notifications for game updates? (y/n): " INSTALL_EMAIL_UPDATE_ENABLE
 			if [[ "$INSTALL_EMAIL_UPDATE_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -1521,15 +1516,15 @@ script_install_email() {
 				INSTALL_EMAIL_UPDATE="0"
 			fi
 		echo ""
-		read -p "Email notifications for server startup? (WARNING: this can be anoying) (y/n): " INSTALL_EMAIL_CRASH_ENABLE
-			if [[ "$INSTALL_EMAIL_CRASH_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+		read -p "Email notifications for server startup? (WARNING: this can be anoying) (y/n): " INSTALL_EMAIL_START_ENABLE
+			if [[ "$INSTALL_EMAIL_START_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 				INSTALL_EMAIL_START="1"
 			else
 				INSTALL_EMAIL_START="0"
 			fi
 		echo ""
-		read -p "Email notifications for server shutdown? (WARNING: this can be anoying) (y/n): " INSTALL_EMAIL_CRASH_ENABLE
-			if [[ "$INSTALL_EMAIL_CRASH_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+		read -p "Email notifications for server shutdown? (WARNING: this can be anoying) (y/n): " INSTALL_EMAIL_STOP_ENABLE
+			if [[ "$INSTALL_EMAIL_STOP_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 				INSTALL_EMAIL_STOP="1"
 			else
 				INSTALL_EMAIL_STOP="0"
@@ -1541,16 +1536,18 @@ script_install_email() {
 			else
 				INSTALL_EMAIL_CRASH="0"
 			fi
-		if [[ "$INSTALL_EMAIL_CONFIGURED" =~ ^([nN][oO]|[nN])$ ]]; then
-			echo ""
-			read -p "Enter the relay host (example: smtp.gmail.com): " INSTALL_EMAIL_RELAY_HOST
-			echo ""
-			read -p "Enter the relay host port (example: 587): " INSTALL_EMAIL_RELAY_HOST_PORT
-			echo ""
+		if [[ "$EUID" == "$(id -u root)" ]] ; then
+			read -p "Configure postfix? (y/n): " INSTALL_EMAIL_CONFIGURE
+			if [[ "$INSTALL_EMAIL_CONFIGURE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+				echo ""
+				read -p "Enter the relay host (example: smtp.gmail.com): " INSTALL_EMAIL_RELAY_HOSTNAME
+				echo ""
+				read -p "Enter the relay host port (example: 587): " INSTALL_EMAIL_RELAY_PORT
+				echo ""
+				read -p "Enter your password for $INSTALL_EMAIL_SENDER : " INSTALL_EMAIL_SENDER_PSW
 
-			if [ "$EUID" -ne "0" ]; then
 				cat >> /etc/postfix/main.cf <<- EOF
-				relayhost = [$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT
+				relayhost = [$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_PORT
 				smtp_sasl_auth_enable = yes
 				smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 				smtp_sasl_security_options = noanonymous
@@ -1560,30 +1557,30 @@ script_install_email() {
 				EOF
 
 				cat > /etc/postfix/sasl_passwd <<- EOF
-				[$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT    $INSTALL_EMAIL_SENDER:$INSTALL_EMAIL_SENDER_PSW
+				[$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_PORT    $INSTALL_EMAIL_SENDER:$INSTALL_EMAIL_SENDER_PSW
 				EOF
 
 				sudo chmod 400 /etc/postfix/sasl_passwd
 				sudo postmap /etc/postfix/sasl_passwd
-				sudo systemctl enable postfix
-			else
-				echo "Add the following lines to /etc/postfix/main.cf"
-				echo "relayhost = [$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT"
-				echo "smtp_sasl_auth_enable = yes"
-				echo "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
-				echo "smtp_sasl_security_options = noanonymous"
-				echo "smtp_tls_CApath = /etc/ssl/certs"
-				echo "smtpd_tls_CApath = /etc/ssl/certs"
-				echo "smtp_use_tls = yes"
-				echo ""
-				echo "Add the following line to /etc/postfix/sasl_passwd"
-				echo "[$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT    $INSTALL_EMAIL_SENDER:$INSTALL_EMAIL_SENDER_PSW"
-				echo ""
-				echo "Execute the following commands:"
-				echo "sudo chmod 400 /etc/postfix/sasl_passwd"
-				echo "sudo postmap /etc/postfix/sasl_passwd"
-				echo "sudo systemctl enable postfix"
+				sudo systemctl enable --now postfix
 			fi
+		else
+			echo "Add the following lines to /etc/postfix/main.cf"
+			echo "relayhost = [$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT"
+			echo "smtp_sasl_auth_enable = yes"
+			echo "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
+			echo "smtp_sasl_security_options = noanonymous"
+			echo "smtp_tls_CApath = /etc/ssl/certs"
+			echo "smtpd_tls_CApath = /etc/ssl/certs"
+			echo "smtp_use_tls = yes"
+			echo ""
+			echo "Add the following line to /etc/postfix/sasl_passwd"
+			echo "[$INSTALL_EMAIL_RELAY_HOST]:$INSTALL_EMAIL_RELAY_HOST_PORT    $INSTALL_EMAIL_SENDER:$INSTALL_EMAIL_SENDER_PSW"
+			echo ""
+			echo "Execute the following commands:"
+			echo "sudo chmod 400 /etc/postfix/sasl_passwd"
+			echo "sudo postmap /etc/postfix/sasl_passwd"
+			echo "sudo systemctl enable postfix"
 		fi
 	elif [[ "$INSTALL_EMAIL_ENABLE" =~ ^([nN][oO]|[nN])$ ]]; then
 		INSTALL_EMAIL_SENDER="none"
@@ -1615,11 +1612,11 @@ script_install_tmpfs() {
 	if [[ "$INSTALL_TMPFS" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 		read -p "Ramdisk size (I recommend at least 8GB): " INSTALL_TMPFS_SIZE
 		echo "Installing ramdisk configuration"
-		if [ "$EUID" -ne "0" ]; then
+		if [[ "$EUID" == "$(id -u root)" ]] ; then
 			cat >> /etc/fstab <<- EOF
 
 			# /mnt/tmpfs
-			tmpfs				   /srv/isrsrv/tmpfs		tmpfs		   rw,size=$INSTALL_TMPFS_SIZE,uid=$(id -u $SERVICE_NAME),mode=0777	0 0
+			tmpfs				   /srv/$SERVICE_NAME/tmpfs		tmpfs		   rw,size=$INSTALL_TMPFS_SIZE,uid=$(id -u $SERVICE_NAME),mode=0777	0 0
 			EOF
 		else
 			echo "Add the following line to /etc/fstab:"
@@ -1689,15 +1686,25 @@ script_install() {
 #---------------------------
 
 #Do not allow for another instance of this script to run to prevent data loss
-if [[ "send_notification_start_initialized" != "$1" ]] && [[ "send_notification_start_complete" != "$1" ]] && [[ "send_notification_stop_initialized" != "$1" ]] && [[ "send_notification_stop_complete" != "$1" ]] && [[ "send_notification_crash" != "$1" ]] && [[ "move_wine_log" != "$1" ]] && [[ "server_tmux_install" != "$1" ]] && [[ "attach" != "$1" ]] && [[ "status" != "$1" ]]; then
+if [[ "send_notification_start_initialized" != "$1" ]] && [[ "send_notification_start_complete" != "$1" ]] && [[ "send_notification_stop_initialized" != "$1" ]] && [[ "send_notification_stop_complete" != "$1" ]] && [[ "send_notification_crash" != "$1" ]] && [[ "move_wine_log" != "$1" ]] && [[ "server_tmux_install" != "$1" ]] && [[ "server_tmux_commands_install" != "$1" ]] && [[ "attach" != "$1" ]] && [[ "attach_commands" != "$1" ]] && [[ "status" != "$1" ]]; then
 	SCRIPT_PID_CHECK=$(basename -- "$0")
 	if pidof -x "$SCRIPT_PID_CHECK" -o $$ > /dev/null; then
 		echo "An another instance of this script is already running, please clear all the sessions of this script before starting a new session"
-		exit 1
+		exit 2
 	fi
 fi
 
 #---------------------------
+
+#Check what user is executing the script and allow root to execute certain functions.
+if [[ "$EUID" != "$(id -u $SERVICE_NAME)" ]] && [[ "install_email" != "$1" ]] && [[ "install_tmpfs" != "$1" ]]; then
+	echo "This script is only able to be executed by the $SERVICE_NAME user."
+	echo "The following functions can also be executed as root: install_email, install_tmpfs"
+	exit 3
+fi
+
+#---------------------------
+
 #Script help page
 case "$1" in
 	help)
