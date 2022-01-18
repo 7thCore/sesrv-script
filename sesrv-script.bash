@@ -2,10 +2,10 @@
 
 #Space Engineers server script by 7thCore
 #If you do not know what any of these settings are you are better off leaving them alone. One thing might brake the other if you fiddle around with it.
-export VERSION="202201170047"
 
 #Basics
 NAME="SeSrv" #Name of the tmux session
+VERSION="1.5-1"
 
 #Server configuration
 SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -842,39 +842,48 @@ script_change_branch() {
 				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Change branch) Clearing game installation." | tee -a "$LOG_SCRIPT"
 				rm -rf $SRV_DIR/$WINE_PREFIX_GAME_DIR/*
 			fi
-			if [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
+			if [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
 				PUBLIC_BRANCH="0"
-			elif [[ "$BETA_BRANCH_ENABLED" == "0" ]]; then
+			elif [[ "$STEAMCMD_BETA_BRANCH" == "0" ]]; then
 				PUBLIC_BRANCH="1"
 			fi
 			echo "Current configuration:"
 			echo 'Public branch: '"$PUBLIC_BRANCH"
-			echo 'Beta branch enabled: '"$BETA_BRANCH_ENABLED"
-			echo 'Beta branch name: '"$BETA_BRANCH_NAME"
+			echo 'Beta branch enabled: '"$STEAMCMD_BETA_BRANCH"
+			echo 'Beta branch name: '"$STEAMCMD_BETA_BRANCH_NAME"
 			echo ""
-			read -p "Public branch or beta branch? (public/beta): " SET_BRANCH_STATE
+			read -p "Public branch or beta branch? (public/beta): " STEAMCMD_BETA_BRANCH_ENABLE
 			echo ""
-			if [[ "$SET_BRANCH_STATE" =~ ^([bB][eE][tT][aA]|[bB])$ ]]; then
-				BETA_BRANCH_ENABLED="1"
+			if [[ "$STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([bB][eE][tT][aA]|[bB])$ ]]; then
+				STEAMCMD_BETA_BRANCH="1"
 				echo "Look up beta branch names at https://steamdb.info/app/363360/depots/"
 				echo "Name example: ir_0.2.8"
 				read -p "Enter beta branch name: " BETA_BRANCH_NAME
-			elif [[ "$SET_BRANCH_STATE" =~ ^([pP][uU][bB][lL][iI][cC]|[pP])$ ]]; then
-				BETA_BRANCH_ENABLED="0"
+			elif [[ "$STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([pP][uU][bB][lL][iI][cC]|[pP])$ ]]; then
+				STEAMCMD_BETA_BRANCH="0"
 				BETA_BRANCH_NAME="none"
 			fi
 			sed -i '/beta_branch_enabled/d' $CONFIG_DIR/$SERVICE_NAME-config.conf
 			sed -i '/beta_branch_name/d' $CONFIG_DIR/$SERVICE_NAME-config.conf
-			echo 'beta_branch_enabled='"$BETA_BRANCH_ENABLED" >> $CONFIG_DIR/$SERVICE_NAME-config.conf
-			echo 'beta_branch_name='"$BETA_BRANCH_NAME" >> $CONFIG_DIR/$SERVICE_NAME-config.conf
-			if [[ "$BETA_BRANCH_ENABLED" == "0" ]]; then
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/available.buildid
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/available.timeupdated
-				steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID -beta validate +quit
-			elif [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/available.buildid
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/available.timeupdated
-				steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID -beta $BETA_BRANCH_NAME validate +quit
+			echo 'beta_branch_enabled='"$STEAMCMD_BETA_BRANCH" >> $CONFIG_DIR/$SERVICE_NAME-config.conf
+			echo 'beta_branch_name='"$STEAMCMD_BETA_BRANCH_NAME" >> $CONFIG_DIR/$SERVICE_NAME-config.conf
+
+			if [[ "$STEAMCMD_BETA_BRANCH" == "0" ]]; then
+				INSTALLED_BUILDID=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_BUILDID" > $UPDATE_DIR/installed.buildid
+
+				INSTALLED_TIME=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_TIME" > $UPDATE_DIR/installed.timeupdated
+
+				steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID validate +quit
+			elif [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+				INSTALLED_BUILDID=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_BUILDID" > $UPDATE_DIR/installed.buildid
+
+				INSTALLED_TIME=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_TIME" > $UPDATE_DIR/installed.timeupdated
+
+				steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID -beta $STEAMCMD_BETA_BRANCH_NAME validate +quit
 			fi
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Change branch) Server branch change complete." | tee -a "$LOG_SCRIPT"
 		elif [[ "$CHANGE_SERVER_BRANCH" =~ ^([nN][oO]|[nN])$ ]]; then
@@ -891,8 +900,8 @@ script_change_branch() {
 script_update() {
 	script_logs
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Initializing update check." | tee -a "$LOG_SCRIPT"
-	if [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Beta branch enabled. Branch name: $BETA_BRANCH_NAME" | tee -a "$LOG_SCRIPT"
+	if [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Beta branch enabled. Branch name: $STEAMCMD_BETA_BRANCH_NAME" | tee -a "$LOG_SCRIPT"
 	fi
 	
 	if [ ! -f $UPDATE_DIR/installed.buildid ] ; then
@@ -910,12 +919,12 @@ script_update() {
 	
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Connecting to steam servers." | tee -a "$LOG_SCRIPT"
 
-	if [[ "$BETA_BRANCH_ENABLED" == "0" ]]; then
+	if [[ "$STEAMCMD_BETA_BRANCH" == "0" ]]; then
 		AVAILABLE_BUILDID=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
 		AVAILABLE_TIME=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
-	elif [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-		AVAILABLE_BUILDID=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
-		AVAILABLE_TIME=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+	elif [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+		AVAILABLE_BUILDID=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+		AVAILABLE_TIME=$(steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
 	fi
 	
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Received application info data." | tee -a "$LOG_SCRIPT"
@@ -951,10 +960,10 @@ script_update() {
 		
 		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Updating..." | tee -a "$LOG_SCRIPT"
 		
-		if [[ "$BETA_BRANCH_ENABLED" == "0" ]]; then
-			steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID validate +quit
-		elif [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-			steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID -beta $BETA_BRANCH_NAME validate +quit
+		if [[ "$STEAMCMD_BETA_BRANCH" == "0" ]]; then
+			steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID validate +quit
+		elif [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+			steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID -beta $STEAMCMD_BETA_BRANCH_NAME validate +quit
 		fi
 		
 		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Update) Update completed." | tee -a "$LOG_SCRIPT"
@@ -998,8 +1007,8 @@ script_update() {
 script_verify_game_integrity() {
 	script_logs
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Integrity check) Initializing integrity check." | tee -a "$LOG_SCRIPT"
-	if [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Integrity check) Beta branch enabled. Branch name: $BETA_BRANCH_NAME" | tee -a "$LOG_SCRIPT"
+	if [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Integrity check) Beta branch enabled. Branch name: $STEAMCMD_BETA_BRANCH_NAME" | tee -a "$LOG_SCRIPT"
 	fi
 	
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Integrity check) Removing Steam/appcache/appinfo.vdf" | tee -a "$LOG_SCRIPT"
@@ -1020,10 +1029,10 @@ script_verify_game_integrity() {
 		rm -rf $TMPFS_DIR/$WINE_PREFIX_GAME_DIR
 	fi
 	
-	if [[ "$BETA_BRANCH_ENABLED" == "0" ]]; then
-		steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID validate +quit
-	elif [[ "$BETA_BRANCH_ENABLED" == "1" ]]; then
-		steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID -beta $BETA_BRANCH_NAME validate +quit
+	if [[ "$STEAMCMD_BETA_BRANCH" == "0" ]]; then
+		steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID validate +quit
+	elif [[ "$STEAMCMD_BETA_BRANCH" == "1" ]]; then
+		steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID -beta $STEAMCMD_BETA_BRANCH_NAME validate +quit
 	fi
 	
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Integrity check) Integrity check completed." | tee -a "$LOG_SCRIPT"
@@ -1388,40 +1397,46 @@ script_diagnostics() {
 #---------------------------
 
 #Installs the steam configuration files and the game if the user so chooses
-script_install_steam() {
+script_config_steam() {
 	echo ""
-	read -p "Do you want to use steam to download the game files and be resposible for maintaining them? (y/n): " INSTALL_STEAMCMD
-	if [[ "$INSTALL_STEAMCMD" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+	read -p "Do you want to use steam to download the game files and be resposible for maintaining them? (y/n): " INSTALL_STEAMCMD_ENABLE
+	if [[ "$INSTALL_STEAMCMD_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 		echo ""
-		read -p "Enable beta branch? Used for experimental and legacy versions. (y/n): " INSTALL_STEAMCMD_BETA_BRANCH_STATE
-		if [[ "$INSTALL_STEAMCMD_BETA_BRANCH_STATE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+		read -p "Enable beta branch? Used for experimental and legacy versions. (y/n): " INSTALL_STEAMCMD_BETA_BRANCH_ENABLE
+		if [[ "$INSTALL_STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 			INSTALL_STEAMCMD_BETA_BRANCH="1"
 			echo "Look up beta branch names at https://steamdb.info/app/$APPID/depots/"
 			echo "Name example: experimental"
 			read -p "Enter beta branch name: " INSTALL_STEAMCMD_BETA_BRANCH_NAME
-		elif [[ "$INSTALL_STEAMCMD_BETA_BRANCH_STATE" =~ ^([nN][oO]|[nN])$ ]]; then
+		elif [[ "$INSTALL_STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([nN][oO]|[nN])$ ]]; then
 			INSTALL_STEAMCMD_BETA_BRANCH="0"
 			INSTALL_STEAMCMD_BETA_BRANCH_NAME="none"
 		fi
 
-		read -p "Do you want to install the server files with steam now? (y/n): " INSTALL_STEAMCMD_GAME_FILES
-		if [[ "$INSTALL_STEAMCMD_GAME_FILES" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+		read -p "Do you want to install the server files with steam now? (y/n): " INSTALL_STEAMCMD_GAME_FILES_ENABLE
+		if [[ "$INSTALL_STEAMCMD_GAME_FILES_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 			echo "Installing game..."
+			steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit > /srv/$SERVICE_NAME/updates/steam_app_data.txt
+
 			if [[ "$INSTALL_STEAMCMD_BETA_BRANCH" == "0" ]]; then
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/installed.buildid
+				INSTALLED_BUILDID=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_BUILDID" > $UPDATE_DIR/installed.buildid
 
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/installed.timeupdated
+				INSTALLED_TIME=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_TIME" > $UPDATE_DIR/installed.timeupdated
 
-				steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID validate +quit
+				steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID validate +quit
 			elif [[ "$INSTALL_STEAMCMD_BETA_BRANCH" == "1" ]]; then
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$INSTALL_STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/installed.buildid
+				INSTALLED_BUILDID=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$INSTALL_STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_BUILDID" > $UPDATE_DIR/installed.buildid
 
-				steamcmd +login anonymous +app_info_update 1 +app_info_print $APPID +quit | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$INSTALL_STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3 > $UPDATE_DIR/installed.timeupdated
+				INSTALLED_TIME=$(cat /srv/$SERVICE_NAME/updates/steam_app_data.txt | grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"$INSTALL_STEAMCMD_BETA_BRANCH_NAME\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"timeupdated\"\s+" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d' ' -f3)
+				echo "$INSTALLED_TIME" > $UPDATE_DIR/installed.timeupdated
 
-				steamcmd +@sSteamCmdForcePlatformType windows +login anonymous +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +app_update $APPID -beta $INSTALL_STEAMCMD_BETA_BRANCH_NAME validate +quit
+				steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir $SRV_DIR/$WINE_PREFIX_GAME_DIR +login anonymous +app_update $APPID -beta $INSTALL_STEAMCMD_BETA_BRANCH_NAME validate +quit
 			fi
 		else
-			echo "Game files installation skipped"
+			echo "Manual game installation selected. Copy your game files to $SRV_DIR/$WINE_PREFIX_GAME_DIR after installation."
 		fi
 	else
 		echo ""
@@ -1440,7 +1455,7 @@ script_install_steam() {
 #---------------------------
 
 #Configures discord integration
-script_install_discord() {
+script_config_discord() {
 	echo ""
 	read -p "Enable discord notifications (y/n): " INSTALL_DISCORD_ENABLE
 	if [[ "$INSTALL_DISCORD_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -1500,7 +1515,7 @@ script_install_discord() {
 #---------------------------
 
 #Configures email integration
-script_install_email() {
+script_config_email() {
 	echo ""
 	read -p "Enable email notifications (y/n): " INSTALL_EMAIL_ENABLE
 	if [[ "$INSTALL_EMAIL_ENABLE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -1605,7 +1620,7 @@ script_install_email() {
 #---------------------------
 
 #Configures tmpfs integration
-script_install_tmpfs() {
+script_config_tmpfs() {
 	echo ""
 	read -p "Enable RamDisk (y/n): " INSTALL_TMPFS
 	echo ""
@@ -1622,9 +1637,11 @@ script_install_tmpfs() {
 			echo "Add the following line to /etc/fstab:"
 			echo "tmpfs				   /srv/isrsrv/tmpfs		tmpfs		   rw,size=$INSTALL_TMPFS_SIZE,uid=$(id -u $SERVICE_NAME),mode=0777	0 0"
 		fi
-		sed -i 's/script_tmpfs=0/script_tmpfs=1/g' /srv/$SERVICE_NAME/config/$SERVICE_NAME-script.conf
+		sed -i '/script_tmpfs/d' $CONFIG_DIR/$SERVICE_NAME-script.conf
+		echo "script_tmpfs=1" >> $CONFIG_DIR/$SERVICE_NAME-script.conf
 	else
-		sed -i 's/script_tmpfs=1/script_tmpfs=0/g' /srv/$SERVICE_NAME/config/$SERVICE_NAME-script.conf
+		sed -i '/script_tmpfs/d' $CONFIG_DIR/$SERVICE_NAME-script.conf
+		echo "script_tmpfs=0" >> $CONFIG_DIR/$SERVICE_NAME-script.conf
 	fi
 	chown $SERVICE_NAME /srv/$SERVICE_NAME/config/$SERVICE_NAME-script.conf
 }
@@ -1632,7 +1649,7 @@ script_install_tmpfs() {
 #---------------------------
 
 #Configures the script
-script_install() {
+script_config_script() {
 	echo -e "${CYAN}Script configuration${NC}"
 	echo -e ""
 	echo -e "The script uses steam to download the game server files, however you have the option to manualy copy the files yourself."
@@ -1642,10 +1659,10 @@ script_install() {
 	echo -e "Default configuration will be applied and it can work without it. You can run the optional configuration for each using the"
 	echo -e "following arguments with the script:"
 	echo -e ""
-	echo -e "${GREEN}install_steam   ${RED}- ${GREEN}Configures steamcmd, automatic updates and installs the game server files.${NC}"
-	echo -e "${GREEN}install_discord ${RED}- ${GREEN}Configures discord integration.${NC}"
-	echo -e "${GREEN}install_email   ${RED}- ${GREEN}Configures email integration. Due to postfix configuration files being in /etc this has to be executed as root.${NC}"
-	echo -e "${GREEN}install_tmpfs   ${RED}- ${GREEN}Configures tmpfs/ramdisk. Due to it adding a line to /etc/fstab this has to be executed as root.${NC}"
+	echo -e "${GREEN}config_steam   ${RED}- ${GREEN}Configures steamcmd, automatic updates and installs the game server files.${NC}"
+	echo -e "${GREEN}config_discord ${RED}- ${GREEN}Configures discord integration.${NC}"
+	echo -e "${GREEN}config_email   ${RED}- ${GREEN}Configures email integration. Due to postfix configuration files being in /etc this has to be executed as root.${NC}"
+	echo -e "${GREEN}config_tmpfs   ${RED}- ${GREEN}Configures tmpfs/ramdisk. Due to it adding a line to /etc/fstab this has to be executed as root.${NC}"
 	echo -e ""
 	echo -e ""
 	read -p "Press any key to continue" -n 1 -s -r
@@ -1654,6 +1671,8 @@ script_install() {
 	echo "Enable services"
 
 	systemctl --user enable $SERVICE_NAME@01.service
+	systemctl --user enable --now isrsrv-timer-1.timer
+	systemctl --user enable --now isrsrv-timer-2.timer
 
 	echo "$SERVICE_NAME@01.service" > $CONFIG_DIR/$SERVICE_NAME-server-list.txt
 
@@ -1699,7 +1718,7 @@ fi
 #Check what user is executing the script and allow root to execute certain functions.
 if [[ "$EUID" != "$(id -u $SERVICE_NAME)" ]] && [[ "install_email" != "$1" ]] && [[ "install_tmpfs" != "$1" ]]; then
 	echo "This script is only able to be executed by the $SERVICE_NAME user."
-	echo "The following functions can also be executed as root: install_email, install_tmpfs"
+	echo "The following functions can also be executed as root: config_email, config_tmpfs"
 	exit 3
 fi
 
@@ -1717,11 +1736,11 @@ case "$1" in
 		echo -e "${GREEN}status ${RED}- ${GREEN}Display status of server.${NC}"
 		echo ""
 		echo "Configuration and installation:"
-		echo -e "${GREEN}install         ${RED}- ${GREEN}Installs all the needed configuration for the script to run, the wine prefix and the game.${NC}"
-		echo -e "${GREEN}install_steam   ${RED}- ${GREEN}Configures steamcmd, automatic updates and installs the game server files.${NC}"
-		echo -e "${GREEN}install_discord ${RED}- ${GREEN}Configures discord integration.${NC}"
-		echo -e "${GREEN}install_email   ${RED}- ${GREEN}Configures email integration. Due to postfix configuration files being in /etc this has to be executed as root.${NC}"
-		echo -e "${GREEN}install_tmpfs   ${RED}- ${GREEN}Configures tmpfs/ramdisk. Due to it adding a line to /etc/fstab this has to be executed as root.${NC}"
+		echo -e "${GREEN}config_script  ${RED}- ${GREEN}Configures the script, enables the systemd services and installs the wine prefix.${NC}"
+		echo -e "${GREEN}config_steam   ${RED}- ${GREEN}Configures steamcmd, automatic updates and installs the game server files.${NC}"
+		echo -e "${GREEN}config_discord ${RED}- ${GREEN}Configures discord integration.${NC}"
+		echo -e "${GREEN}config_email   ${RED}- ${GREEN}Configures email integration. Due to postfix configuration files being in /etc this has to be executed as root.${NC}"
+		echo -e "${GREEN}config_tmpfs   ${RED}- ${GREEN}Configures tmpfs/ramdisk. Due to it adding a line to /etc/fstab this has to be executed as root.${NC}"
 		echo ""
 		echo "Server services managment:"
 		echo -e "${GREEN}add_server                      ${RED}- ${GREEN}Adds a server instance.${NC}"
@@ -1766,20 +1785,20 @@ case "$1" in
 		;;
 #---------------------------
 #Configuration and installation
-	install)
-		script_install
+	config_script)
+		script_config_script
 		;;
-	install_steam)
-		script_install_steam
+	config_steam)
+		script_config_steam
 		;;
-	install_discord)
-		script_install_discord
+	config_discord)
+		script_config_discord
 		;;
-	install_email)
-		script_install_email
+	config_email)
+		script_config_email
 		;;
-	install_tmpfs)
-		script_install_tmpfs
+	config_tmpfs)
+		script_config_tmpfs
 		;;
 #---------------------------
 #Server services managment
@@ -1898,7 +1917,7 @@ case "$1" in
 	echo "For more detailed information, execute the script with the -help argument"
 	echo ""
 	echo -e "${GREEN}Basic script commands${RED}: ${GREEN}help, diag, status${NC}"
-	echo -e "${GREEN}Configuration and installation${RED}: ${GREEN}install, install_steam, install_discord, install_email, install_tmpfs${NC}"
+	echo -e "${GREEN}Configuration and installation${RED}: ${GREEN}config_script, config_steam, config_discord, config_email, config_tmpfs${NC}"
 	echo -e "${GREEN}Server services managment${RED}: ${GREEN}add_server, remove_server, enable_services, disable_services, reload_services${NC}"
 	echo -e "${GREEN}Server and console managment${RED}: ${GREEN}start, start_no_err, stop,restart, save, sync, attach, attach_commands${NC}"
 	echo -e "${GREEN}Backup managment${RED}: ${GREEN}backup, autobackup, delete_backup${NC}"
