@@ -5,7 +5,7 @@
 
 #Basics
 NAME="SeSrv" #Name of the tmux session
-VERSION="1.5-1"
+VERSION="1.5-2" #Package and script version
 
 #Server configuration
 SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -1671,8 +1671,8 @@ script_config_script() {
 	echo "Enable services"
 
 	systemctl --user enable $SERVICE_NAME@01.service
-	systemctl --user enable --now isrsrv-timer-1.timer
-	systemctl --user enable --now isrsrv-timer-2.timer
+	systemctl --user enable --now $SERVICE_NAME-timer-1.timer
+	systemctl --user enable --now $SERVICE_NAME-timer-2.timer
 
 	echo "$SERVICE_NAME@01.service" > $CONFIG_DIR/$SERVICE_NAME-server-list.txt
 
