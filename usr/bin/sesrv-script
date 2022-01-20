@@ -5,7 +5,7 @@
 
 #Basics
 NAME="SeSrv" #Name of the tmux session
-VERSION="1.5-2" #Package and script version
+VERSION="1.5-3" #Package and script version
 
 #Server configuration
 SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -100,7 +100,6 @@ BCKP_DEST="$BCKP_DIR/$(date +"%Y")/$(date +"%m")/$(date +"%d")" #How backups are
 export LOG_DIR="/srv/$SERVICE_NAME/logs/$(date +"%Y")/$(date +"%m")/$(date +"%d")"
 export LOG_DIR_ALL="/srv/$SERVICE_NAME/logs"
 export LOG_SCRIPT="$LOG_DIR/$SERVICE_NAME-script.log" #Script log
-export LOG_TMP="/tmp/$SERVICE_NAME-$SERVICE_NAME-tmux.log"
 export CRASH_DIR="/srv/$SERVICE_NAME/logs/crashes/$(date +"%Y-%m-%d_%H-%M")"
 
 #-------Do not edit anything beyond this line-------
@@ -852,16 +851,16 @@ script_change_branch() {
 			echo 'Beta branch enabled: '"$STEAMCMD_BETA_BRANCH"
 			echo 'Beta branch name: '"$STEAMCMD_BETA_BRANCH_NAME"
 			echo ""
-			read -p "Public branch or beta branch? (public/beta): " STEAMCMD_BETA_BRANCH_ENABLE
+			read -p "Public branch or beta branch? (public/beta): " SET_BRANCH_STATE
 			echo ""
-			if [[ "$STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([bB][eE][tT][aA]|[bB])$ ]]; then
+			if [[ "$SET_BRANCH_STATE" =~ ^([bB][eE][tT][aA]|[bB])$ ]]; then
 				STEAMCMD_BETA_BRANCH="1"
 				echo "Look up beta branch names at https://steamdb.info/app/363360/depots/"
 				echo "Name example: ir_0.2.8"
-				read -p "Enter beta branch name: " BETA_BRANCH_NAME
-			elif [[ "$STEAMCMD_BETA_BRANCH_ENABLE" =~ ^([pP][uU][bB][lL][iI][cC]|[pP])$ ]]; then
+				read -p "Enter beta branch name: " STEAMCMD_BETA_BRANCH_NAME
+			elif [[ "$SET_BRANCH_STATE" =~ ^([pP][uU][bB][lL][iI][cC]|[pP])$ ]]; then
 				STEAMCMD_BETA_BRANCH="0"
-				BETA_BRANCH_NAME="none"
+				STEAMCMD_BETA_BRANCH_NAME="none"
 			fi
 			sed -i '/beta_branch_enabled/d' $CONFIG_DIR/$SERVICE_NAME-config.conf
 			sed -i '/beta_branch_name/d' $CONFIG_DIR/$SERVICE_NAME-config.conf
@@ -1126,7 +1125,7 @@ script_server_tmux_install() {
 		bind C-a send-prefix
 
 		#Bind C-a r to reload the config file
-		bind-key r source-file /tmp/$SERVICE_NAME-$SERVICE_NAME-$1-tmux.conf \; display-message "Config reloaded!"
+		bind-key r source-file /tmp/$SERVICE_NAME-$1-tmux.conf \; display-message "Config reloaded!"
 
 		set-hook -g session-created 'resize-window -y 24 -x 10000'
 		set-hook -g client-attached 'resize-window -y 24 -x 10000'
