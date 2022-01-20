@@ -1,0 +1,14 @@
+getent group sesrv >/dev/null || groupadd --system sesrv
+getent passwd sesrv >/dev/null || useradd --system -g sesrv \
+  -d /srv/sesrv/ -s /bin/bash sesrv
+
+install -dm700 srv/sesrv/backups
+install -dm700 srv/sesrv/config
+install -dm700 srv/sesrv/logs
+install -dm700 srv/sesrv/server
+install -dm700 srv/sesrv/tmpfs
+install -dm700 srv/sesrv/updates
+chown -R sesrv:sesrv srv/sesrv
+loginctl enable-linger sesrv
+systemctl start user@$(id -u sesrv).service
+

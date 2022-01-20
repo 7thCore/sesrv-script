@@ -1,0 +1,6 @@
+[Unit]
+Description=SeSrv Script Timer 2 Service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sesrv-script timer_two
