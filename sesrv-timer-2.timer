@@ -1,0 +1,31 @@
+[Unit]
+Description=SeSrv Script Timer 2
+
+[Timer]
+OnCalendar=*-*-* *:15:00
+OnCalendar=*-*-* *:30:00
+OnCalendar=*-*-* *:45:00
+OnCalendar=*-*-* 01:00:00
+OnCalendar=*-*-* 02:00:00
+OnCalendar=*-*-* 03:00:00
+OnCalendar=*-*-* 04:00:00
+OnCalendar=*-*-* 05:00:00
+OnCalendar=*-*-* 07:00:00
+OnCalendar=*-*-* 08:00:00
+OnCalendar=*-*-* 09:00:00
+OnCalendar=*-*-* 10:00:00
+OnCalendar=*-*-* 11:00:00
+OnCalendar=*-*-* 13:00:00
+OnCalendar=*-*-* 14:00:00
+OnCalendar=*-*-* 15:00:00
+OnCalendar=*-*-* 16:00:00
+OnCalendar=*-*-* 17:00:00
+OnCalendar=*-*-* 19:00:00
+OnCalendar=*-*-* 20:00:00
+OnCalendar=*-*-* 21:00:00
+OnCalendar=*-*-* 22:00:00
+OnCalendar=*-*-* 23:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

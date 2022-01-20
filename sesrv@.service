@@ -1,0 +1,30 @@
+[Unit]
+Description=SeSrv Server Service
+After=network.target
+Conflicts=sesrv-tmpfs.service
+StartLimitBurst=3
+StartLimitIntervalSec=300
+StartLimitAction=none
+OnFailure=sesrv-send-notification@%i.service
+
+[Service]
+Type=forking
+KillMode=process
+WorkingDirectory=/srv/sesrv/server/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64
+ExecStartPre=/usr/bin/sesrv-script server_tmux_install %i
+ExecStartPre=/usr/bin/sesrv-script send_notification_start_initialized %i
+ExecStart=/usr/bin/tmux -f /tmp/%u-%i-tmux.conf -L %u-%i-tmux.sock new-session -d -s SeSrv 'env WINEARCH=win64 WINEDEBUG=warn+heap WINEPREFIX=/srv/sesrv/server wine /srv/sesrv/server/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64/SpaceEngineersDedicated.exe -console -path "C:\x5cusers\x5c%u\x5cApplication Data\x5cSpaceEngineersDedicated\x5c%i" 2> /srv/sesrv/logs/sesrv-wine-%i.log'
+ExecStartPost=/usr/bin/sesrv-script send_notification_start_complete %i
+ExecStop=/usr/bin/sesrv-script send_notification_stop_initialized %i
+ExecStop=/usr/bin/tmux -L %u-%i-tmux.sock send-keys -t SeSrv.0 C-c
+ExecStop=/usr/bin/sleep 20
+ExecStopPost=/usr/bin/rm /tmp/%u-%i-tmux.conf
+ExecStopPost=/usr/bin/sesrv-script move_wine_log %i
+ExecStopPost=/usr/bin/sesrv-script send_notification_stop_complete %i
+TimeoutStartSec=infinity
+TimeoutStopSec=120
+RestartSec=10
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

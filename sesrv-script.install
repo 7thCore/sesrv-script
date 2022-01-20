@@ -1,0 +1,9 @@
+post_install() {
+  getent group sesrv >/dev/null || groupadd --system sesrv
+  getent passwd sesrv >/dev/null || useradd --system -g sesrv \
+    -d /srv/sesrv/ -s /bin/bash sesrv
+
+  chown -R sesrv:sesrv srv/sesrv
+  loginctl enable-linger sesrv
+  systemctl start user@$(id -u sesrv).service
+}
