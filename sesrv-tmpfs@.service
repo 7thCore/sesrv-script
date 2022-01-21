@@ -1,7 +1,7 @@
 [Unit]
 Description=SeSrv TmpFs Server Service
 Requires=sesrv-sync-tmpfs.service
-After=network.target mnt-tmpfs.mount sesrv-sync-tmpfs.service
+After=network.target srv-sesrv-tmpfs.mount sesrv-sync-tmpfs.service
 Conflicts=sesrv.service
 StartLimitBurst=3
 StartLimitIntervalSec=300

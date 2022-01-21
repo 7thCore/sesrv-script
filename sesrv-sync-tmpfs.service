@@ -1,6 +1,6 @@
 [Unit]
 Description=SeSrv TmpFs sync
-After=mnt-tmpfs.mount
+After=srv-sesrv-tmpfs.mount
 
 [Service]
 Type=oneshot
