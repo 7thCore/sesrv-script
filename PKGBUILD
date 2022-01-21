@@ -2,7 +2,7 @@
 
 pkgname=sesrv-script
 pkgver=1.5
-pkgrel=3
+pkgrel=4
 pkgdesc='Space Engineers server script for running the server on linux with wine compatibility layer.'
 arch=('x86_64')
 depends=('bash'
@@ -60,15 +60,15 @@ source=('sesrv-script.bash'
         'sesrv-tmpfs@.service'
         'bash_profile')
 noextract=('')
-sha256sums=('06f3b3d1b70b05c96b821635162f3bb5bcac9a4a72a5801060dfe8cf66798147'
+sha256sums=('3603531d78811eaa4f55c965fa06b7e1365dd12cbebd96619244be3a312bf235'
             '88848b4fad449dd01d1fb478ae0e1d39908ea4a31053cde47be7dcda38548e53'
             'c06df25e6ec278317e00bcca562baaead02475db90cb139732c21dabe7d3324f'
             'b614436c5cbdeea4b9ea8170d909c5f8a1cbe82505b716d07e2dfa45f52112d1'
             'a9b2b6f1bb3fb3c75677eba13ea2f0b12b7ddfe969d5d659a66a7695250187a9'
             '9a0d4b378bf7f3987ba7194caf88633f80bfee313bbced49f9ee42fc5e450f88'
             '1ab932e692763b5c69abee43faff42201e71a1dc39af6cfb001deca1d6011567'
-            'aac5a5577b5a00f5d716e442455fdfffc49138e449be207b4b7b412fbbdd56d0'
-            '0d50b4ed428f3df25e6882c2194d9e00fdc4920bc2f8f4c216cd3f9e4d88400d'
+            'e942bc76f7a7c1b5ae1a70012a0d55c3a01f1c321de5a8b0315cf50b30152b14'
+            '54fcb9cbbf5e2c26d3e54442ace1022b3afa0bcfd282206cdb0cd1336c967787'
             'f1e2f643b81b27d16fe79e0563e39c597ce42621ae7c2433fd5b70f1eeab5d63')
 
 package() {
