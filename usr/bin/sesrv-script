@@ -4,11 +4,11 @@
 #If you do not know what any of these settings are you are better off leaving them alone. One thing might brake the other if you fiddle around with it.
 
 #Basics
-NAME="SeSrv" #Name of the tmux session
-VERSION="1.5-5" #Package and script version
+export NAME="SeSrv" #Name of the tmux session
+export VERSION="1.5-6" #Package and script version
 
 #Server configuration
-SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
+export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
 SRV_DIR="/srv/$SERVICE_NAME/server" #Location of the server located on your hdd/ssd
 SCRIPT_NAME="$SERVICE_NAME-script.bash" #Script name
 CONFIG_DIR="/srv/$SERVICE_NAME/config" #Location of this script
@@ -241,11 +241,13 @@ script_attach() {
 #Disable all script services
 script_disable_services() {
 	script_logs
+	IFS=","
 	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE_NAME-tmpfs@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		if [[ "$(systemctl --user show -p UnitFileState --value $SERVER_SERVICE)" == "enabled" ]]; then
 			systemctl --user disable $SERVER_SERVICE
 		fi
 	done
+	IFS=","
 	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		if [[ "$(systemctl --user show -p UnitFileState --value $SERVER_SERVICE)" == "enabled" ]]; then
 			systemctl --user disable $SERVER_SERVICE
@@ -775,6 +777,7 @@ script_backup() {
 script_autobackup() {
 	script_logs
 	RUNNING_SERVERS="0"
+	IFS=","
 	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" != "active" ]]; then
@@ -1205,6 +1208,7 @@ script_install_prefix() {
 script_timer_one() {
 	script_logs
 	RUNNING_SERVERS="0"
+	IFS=","
 	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
@@ -1235,6 +1239,7 @@ script_timer_one() {
 script_timer_two() {
 	script_logs
 	RUNNING_SERVERS="0"
+	IFS=","
 	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
