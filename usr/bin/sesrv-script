@@ -5,7 +5,7 @@
 
 #Basics
 NAME="SeSrv" #Name of the tmux session
-VERSION="1.5-4" #Package and script version
+VERSION="1.5-5" #Package and script version
 
 #Server configuration
 SERVICE_NAME="sesrv" #Name of the service files, user, script and script log

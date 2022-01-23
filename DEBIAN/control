@@ -3,6 +3,6 @@ Version: 1.5-3
 Architecture: amd64
 Essential: no
 Priority: optional
-Depends: bash, coreutils, sudo, grep, sed, gawk, curl, rsync, findutils, cabextract, unzip, p7zip, wget, tmux, postfix, zip, jq, xvfb, libpam-systemd, winehq-staging
+Depends: bash, coreutils, sudo, grep, sed, gawk, curl, rsync, findutils, cabextract, unzip, p7zip, wget, tmux, postfix, zip, jq, steamcmd, xvfb, libpam-systemd, winehq-staging
 Maintainer: 7thCore
 Description: Space Engineers server script for running the server on linux with wine compatibility layer.
