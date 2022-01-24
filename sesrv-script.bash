@@ -21,12 +21,11 @@
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
-export VERSION="1.5-7" #Package and script version
+export VERSION="1.5-8" #Package and script version
 
 #Server configuration
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
 SRV_DIR="/srv/$SERVICE_NAME/server" #Location of the server located on your hdd/ssd
-SCRIPT_NAME="$SERVICE_NAME-script.bash" #Script name
 CONFIG_DIR="/srv/$SERVICE_NAME/config" #Location of this script
 UPDATE_DIR="/srv/$SERVICE_NAME/updates" #Location of update information for the script's automatic update feature
 
@@ -36,14 +35,12 @@ if [ -f "$CONFIG_DIR/$SERVICE_NAME-script.conf" ] ; then
 	BCKP_DELOLD=$(cat $CONFIG_DIR/$SERVICE_NAME-script.conf | grep script_bckp_delold= | cut -d = -f2) #Delete old backups.
 	LOG_DELOLD=$(cat $CONFIG_DIR/$SERVICE_NAME-script.conf | grep script_log_delold= | cut -d = -f2) #Delete old logs.
 	LOG_GAME_DELOLD=$(cat $CONFIG_DIR/$SERVICE_NAME-script.conf | grep script_log_game_delold= | cut -d = -f2) #Delete old game logs.
-	DUMP_GAME_DELOLD=$(cat $CONFIG_DIR/$SERVICE_NAME-script.conf | grep script_dump_game_delold= | cut -d = -f2) #Delete old game dumps.
 	UPDATE_IGNORE_FAILED_ACTIVATIONS=$(cat $CONFIG_DIR/$SERVICE_NAME-script.conf | grep script_update_ignore_failed_startups= | cut -d = -f2) #Ignore failed startups during update configuration
 else
 	TMPFS_ENABLE=0
 	BCKP_DELOLD=7
 	LOG_DELOLD=7
 	LOG_GAME_DELOLD=7
-	DUMP_GAME_DELOLD=7
 	UPDATE_IGNORE_FAILED_ACTIVATIONS=0
 fi
 
@@ -813,33 +810,37 @@ script_autobackup() {
 
 #---------------------------
 
-#Delete the savegame from the server
+#Delete server save
 script_delete_save() {
 	script_logs
-	if [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" != "active" ]] && [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" != "activating" ]] && [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" != "deactivating" ]]; then
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) WARNING! This will delete the server's save game." | tee -a "$LOG_SCRIPT"
-		read -p "Are you sure you want to delete the server's save game? (y/n): " DELETE_SERVER_SAVE
-		if [[ "$DELETE_SERVER_SAVE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-			read -p "Do you also want to delete the server.json and SSK.txt? (y/n): " DELETE_SERVER_SSKJSON
-			if [[ "$DELETE_SERVER_SSKJSON" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-				if [[ "$TMPFS_ENABLE" == "1" ]]; then
-					rm -rf $TMPFS_DIR
+	if [ -z "$1" ]; then
+		echo "You must specify a server to delete it's save."
+	else
+		if [[ "$(systemctl --user show -p ActiveState --value $SERVICE@$1.service)" != "active" ]] && [[ "$(systemctl --user show -p ActiveState --value $SERVICE@$1.service)" != "activating" ]] && [[ "$(systemctl --user show -p ActiveState --value $SERVICE@$1.service)" != "deactivating" ]]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) WARNING! This will delete the save for server $1." | tee -a "$LOG_SCRIPT"
+			read -p "Are you sure you want to delete the server's save game? (y/n): " DELETE_SERVER_SAVE
+			if [[ "$DELETE_SERVER_SAVE" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+				read -p "Do you also want to delete the SpaceEngineers-Dedicated.cfg file? (y/n): " DELETE_SERVER_SETTINGS
+				if [[ "$DELETE_SERVER_SETTINGS" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+					if [[ "$TMPFS_ENABLE" == "1" ]]; then
+						rm -rf "$TMPFS_DIR/$WINE_PREFIX_GAME_CONFIG/$1"
+					fi
+					rm -rf "$SRV_DIR/$WINE_PREFIX_GAME_CONFIG/$1"
+					echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Deletion of save files for server $1 complete." | tee -a "$LOG_SCRIPT"
+				elif [[ "$DELETE_SERVER_SETTINGS" =~ ^([nN][oO]|[nN])$ ]]; then
+					if [[ "$TMPFS_ENABLE" == "1" ]]; then
+						rm -rf "$TMPFS_DIR/$WINE_PREFIX_GAME_CONFIG/$1"
+					fi
+					cd "$SRV_DIR/$WINE_PREFIX_GAME_CONFIG/$1"
+					rm -rf $(ls | grep -v SpaceEngineers-Dedicated.cfg)
+					echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Deletion of save files for server $1 complete. The SpaceEngineers-Dedicated.cfg file is untouched." | tee -a "$LOG_SCRIPT"
 				fi
-				rm -rf "$SRV_DIR/$WINE_PREFIX_GAME_CONFIG"/*
-				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Deletion of save files, server.json and SSK.txt complete." | tee -a "$LOG_SCRIPT"
-			elif [[ "$DELETE_SERVER_SSKJSON" =~ ^([nN][oO]|[nN])$ ]]; then
-				if [[ "$TMPFS_ENABLE" == "1" ]]; then
-					rm -rf $TMPFS_DIR
-				fi
-				cd "$SRV_DIR/$WINE_PREFIX_GAME_CONFIG"
-				rm -rf $(ls | grep -v server.json | grep -v SSK.txt)
-				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Deletion of save files complete. SSK and server.json are untouched." | tee -a "$LOG_SCRIPT"
+			elif [[ "$DELETE_SERVER_SAVE" =~ ^([nN][oO]|[nN])$ ]]; then
+				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Save deletion for server $1 canceled." | tee -a "$LOG_SCRIPT"
 			fi
-		elif [[ "$DELETE_SERVER_SAVE" =~ ^([nN][oO]|[nN])$ ]]; then
-			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Delete save) Save deletion canceled." | tee -a "$LOG_SCRIPT"
+		elif [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" == "active" ]]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Clear save) Server $1 is running. Aborting..." | tee -a "$LOG_SCRIPT"
 		fi
-	elif [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" == "active" ]]; then
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Clear save) The server is running. Aborting..." | tee -a "$LOG_SCRIPT"
 	fi
 }
 
@@ -1725,8 +1726,7 @@ script_config_script() {
 	echo 'script_bckp_delold=14' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
 	echo 'script_log_delold=7' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
 	echo 'script_log_game_delold=7' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
-	echo 'script_dump_game_delold=7' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
-	echo 'script_timeout_save=120' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
+	echo 'script_update_ignore_failed_startups=0' >> $CONFIG_DIR/$SERVICE_NAME-script.conf
 
 	echo "Generating wine prefix"
 	script_generate_wine_prefix
@@ -1808,7 +1808,7 @@ case "$1" in
 		echo -e "${GREEN}change_branch ${RED}- ${GREEN}Changes the game branch in use by the server (public,experimental,legacy and so on).${NC}"
 		echo ""
 		echo "Game specific functions:"
-		echo -e "${GREEN}delete_save ${RED}- ${GREEN}Delete the server's save game with the option for deleting/keeping the server files.${NC}"
+		echo -e "${GREEN}delete_save <server number> ${RED}- ${GREEN}Delete the server's save game with the option for deleting/keeping the server.json and other server files.${NC}"
 		echo ""
 		echo "Wine functions:"
 		echo -e "${GREEN}rebuild_prefix ${RED}- ${GREEN}Reinstalls the wine prefix. Usefull if any wine prefix updates occoured.${NC}"
@@ -1908,7 +1908,7 @@ case "$1" in
 #---------------------------
 #Game specific functions
 	delete_save)
-		script_delete_save
+		script_delete_save $2
 		;;
 #---------------------------
 #Wine functions
