@@ -1,11 +1,27 @@
 #!/bin/bash
 
+#    Copyright (C) 2022 7thCore
+#    This file is part of SeSrv-Script.
+#
+#    SeSrv-Script is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SeSrv-Script is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #Space Engineers server script by 7thCore
 #If you do not know what any of these settings are you are better off leaving them alone. One thing might brake the other if you fiddle around with it.
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
-export VERSION="1.5-6" #Package and script version
+export VERSION="1.5-7" #Package and script version
 
 #Server configuration
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -76,7 +92,7 @@ APPID="298740"
 #Wine configuration
 WINE_ARCH="win64"
 WINE_PREFIX_GAME_DIR="drive_c/Games/SpaceEngineersDedicated" #Server executable directory
-WINE_PREFIX_GAME_EXE="DedicatedServer64/SpaceEngineersDedicated.exe -console" #Server executable
+WINE_PREFIX_GAME_EXE="DedicatedServer64/SpaceEngineersDedicated.exe" #Server executable
 WINE_PREFIX_GAME_CONFIG="drive_c/users/$SERVICE_NAME/Application Data/SpaceEngineersDedicated" #Server save and configuration location
 
 #Ramdisk configuration
@@ -1295,36 +1311,30 @@ script_diagnostics() {
 	fi
 	
 	#Check if files/folders present
-	if [ -f "$CONFIG_DIR/$SCRIPT_NAME" ] ; then
-		echo "Script installed: Yes"
+	if [ -f "/usr/bin/$SERVICE_NAME-script" ] ; then
+		echo "Script present: Yes"
 	else
-		echo "Script installed: No"
+		echo "Script present: No"
 	fi
-	
-	if [ -f "$CONFIG_DIR/$SERVICE_NAME-config.conf" ] ; then
-		echo "Configuration file present: Yes"
+
+	if [ -d "/srv/$SERVICE_NAME/config" ]; then
+		echo "Configuration folder present: Yes"
 	else
-		echo "Configuration file present: No"
+		echo "Configuration folder present: No"
 	fi
-	
+
 	if [ -d "/srv/$SERVICE_NAME/backups" ]; then
 		echo "Backups folder present: Yes"
 	else
 		echo "Backups folder present: No"
 	fi
-	
+
 	if [ -d "/srv/$SERVICE_NAME/logs" ]; then
 		echo "Logs folder present: Yes"
 	else
 		echo "Logs folder present: No"
 	fi
-	
-	if [ -d "/srv/$SERVICE_NAME/scripts" ]; then
-		echo "Scripts folder present: Yes"
-	else
-		echo "Scripts folder present: No"
-	fi
-	
+
 	if [ -d "/srv/$SERVICE_NAME/server" ]; then
 		echo "Server folder present: Yes"
 		echo ""
@@ -1334,11 +1344,35 @@ script_diagnostics() {
 	else
 		echo "Server folder present: No"
 	fi
-	
+
 	if [ -d "/srv/$SERVICE_NAME/updates" ]; then
 		echo "Updates folder present: Yes"
 	else
 		echo "Updates folder present: No"
+	fi
+
+	if [ -f "$CONFIG_DIR/$SERVICE_NAME-script.conf" ] ; then
+		echo "Script configuration file present: Yes"
+	else
+		echo "Script configuration file present: No"
+	fi
+
+	if [ -f "$CONFIG_DIR/$SERVICE_NAME-steam.conf" ] ; then
+		echo "Steam configuration file present: Yes"
+	else
+		echo "Steam configuration file present: No"
+	fi
+
+	if [ -f "$CONFIG_DIR/$SERVICE_NAME-discord.conf" ] ; then
+		echo "Discord configuration file present: Yes"
+	else
+		echo "Discord configuration file present: No"
+	fi
+
+	if [ -f "$CONFIG_DIR/$SERVICE_NAME-email.conf" ] ; then
+		echo "Email configuration file present: Yes"
+	else
+		echo "Email configuration file present: No"
 	fi
 	
 	if [ -f "/srv/$SERVICE_NAME/.config/systemd/user/$SERVICE_NAME-sync-tmpfs.service" ]; then
@@ -1389,7 +1423,7 @@ script_diagnostics() {
 		echo "Notification sending service present: No"
 	fi
 	
-	if [ -f "$SRV_DIR/$WINE_PREFIX_GAME_DIR/DedicatedServer64/SpaceEngineersDedicated.exe" ]; then
+	if [ -f "$SRV_DIR/$WINE_PREFIX_GAME_DIR/$WINE_PREFIX_GAME_EXE" ]; then
 		echo "Game executable present: Yes"
 	else
 		echo "Game executable present: No"
@@ -1778,6 +1812,7 @@ case "$1" in
 		echo ""
 		echo "Wine functions:"
 		echo -e "${GREEN}rebuild_prefix ${RED}- ${GREEN}Reinstalls the wine prefix. Usefull if any wine prefix updates occoured.${NC}"
+		echo ""
 		;;
 #---------------------------
 #Basic script functions
