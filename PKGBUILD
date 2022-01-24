@@ -2,9 +2,10 @@
 
 pkgname=sesrv-script
 pkgver=1.5
-pkgrel=6
+pkgrel=7
 pkgdesc='Space Engineers server script for running the server on linux with wine compatibility layer.'
 arch=('x86_64')
+license=('GPL3')
 depends=('bash'
          'coreutils'
          'sudo'
@@ -47,29 +48,27 @@ depends=('bash'
          'lib32-gst-plugins-base'
          'lib32-gst-plugins-good'
          'steamcmd')
-backup=('')
 install=sesrv-script.install
-source=('sesrv-script.bash'
-        'sesrv-timer-1.timer'
-        'sesrv-timer-1.service'
-        'sesrv-timer-2.timer'
-        'sesrv-timer-2.service'
+source=('bash_profile'
+        'sesrv-script.bash'
         'sesrv-send-notification@.service'
         'sesrv@.service'
         'sesrv-sync-tmpfs.service'
-        'sesrv-tmpfs@.service'
-        'bash_profile')
-noextract=('')
-sha256sums=('e41c7181c073ae4335e8ca93907802ac9b6fc176da655ec96ce2bca00e28f2c5'
-            '88848b4fad449dd01d1fb478ae0e1d39908ea4a31053cde47be7dcda38548e53'
-            'c06df25e6ec278317e00bcca562baaead02475db90cb139732c21dabe7d3324f'
-            'b614436c5cbdeea4b9ea8170d909c5f8a1cbe82505b716d07e2dfa45f52112d1'
-            'a9b2b6f1bb3fb3c75677eba13ea2f0b12b7ddfe969d5d659a66a7695250187a9'
-            '9a0d4b378bf7f3987ba7194caf88633f80bfee313bbced49f9ee42fc5e450f88'
-            '1ab932e692763b5c69abee43faff42201e71a1dc39af6cfb001deca1d6011567'
-            'e942bc76f7a7c1b5ae1a70012a0d55c3a01f1c321de5a8b0315cf50b30152b14'
-            '54fcb9cbbf5e2c26d3e54442ace1022b3afa0bcfd282206cdb0cd1336c967787'
-            'f1e2f643b81b27d16fe79e0563e39c597ce42621ae7c2433fd5b70f1eeab5d63')
+        'sesrv-timer-1.service'
+        'sesrv-timer-1.timer'
+        'sesrv-timer-2.service'
+        'sesrv-timer-2.timer'
+        'sesrv-tmpfs@.service')
+sha256sums=('f1e2f643b81b27d16fe79e0563e39c597ce42621ae7c2433fd5b70f1eeab5d63'
+            '2f545ebbf2a63c46116988cfff83c8f167603c673c7d5fefd15416a59eecc7f3'
+            'df35121cf2fd1f6aaa79f344746f48ca5c5fbbffdc2a2b39415305342e72dddd'
+            'bc5033c190018ce4b630d8a334f3116132b11baf90075dfaf07e5a8da3e64f80'
+            '1b470cd54241d4c6f5563ff2dd2533629ac1adbf53d3ca6f111474326d55bc6a'
+            'a079bbe8c972f6654d9c091f2968960c9a992b189af8aadca706cd12f3c05db9'
+            '017efdf5547402d13b73d3d206387ac689b6aa9b07f82a5fa5bb68e7042d46fb'
+            '05676f16c87f9bfff4d998a46d640d69156d634be370b2592dd769686cab37fa'
+            '537ad490a1e5241048e2b3f8beeb2dec1770024adddc5d46b2ed73c08d6ee3f6'
+            'b5b634d82e8d9a34bd5607f870c834de2989263bbaf021254b78bf834fd81ac8')
 
 package() {
   install -d -m0755 "${pkgdir}/usr/bin"
