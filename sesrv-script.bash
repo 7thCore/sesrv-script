@@ -21,7 +21,7 @@
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
-export VERSION="1.6-1" #Package and script version
+export VERSION="1.6-2" #Package and script version
 
 #Server configuration
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
