@@ -21,7 +21,7 @@
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
-export VERSION="1.6-2" #Package and script version
+export VERSION="1.6-3" #Package and script version
 
 #Server configuration
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -255,13 +255,13 @@ script_attach() {
 script_disable_services() {
 	script_logs
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE_NAME-tmpfs@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME_NAME-tmpfs@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		if [[ "$(systemctl --user show -p UnitFileState --value $SERVER_SERVICE)" == "enabled" ]]; then
 			systemctl --user disable $SERVER_SERVICE
 		fi
 	done
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		if [[ "$(systemctl --user show -p UnitFileState --value $SERVER_SERVICE)" == "enabled" ]]; then
 			systemctl --user disable $SERVER_SERVICE
 		fi
@@ -674,7 +674,7 @@ script_stop() {
 	script_logs
 	if [ -z "$1" ]; then
 		IFS=","
-		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 			SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 			if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
 				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Stop) Server $SERVER_NUMBER is not running." | tee -a "$LOG_SCRIPT"
@@ -720,7 +720,7 @@ script_restart() {
 	script_logs
 	if [ -z "$1" ]; then
 		IFS=","
-		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 			SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 			if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
 				echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Restart) Server $SERVER_NUMBER is not running. Use -start to start the server." | tee -a "$LOG_SCRIPT"
@@ -791,7 +791,7 @@ script_autobackup() {
 	script_logs
 	RUNNING_SERVERS="0"
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" != "active" ]]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Autobackup) Server $SERVER_NUMBER is not running." | tee -a "$LOG_SCRIPT"
@@ -963,7 +963,7 @@ script_update() {
 		fi
 		
 		IFS=","
-		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+		for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 			if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "active" ]]; then
 				WAS_ACTIVE=("$SERVER_SERVICE" "${WAS_ACTIVE[@]}")
 			fi
@@ -1034,7 +1034,7 @@ script_verify_game_integrity() {
 	rm -rf "/srv/$SERVICE_NAME/.steam/appcache/appinfo.vdf"
 	
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "active" ]]; then
 			WAS_ACTIVE=("$SERVER_SERVICE" "${WAS_ACTIVE[@]}")
 		fi
@@ -1237,7 +1237,7 @@ script_timer_one() {
 	script_logs
 	RUNNING_SERVERS="0"
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Status) Server $SERVER_NUMBER is not running." | tee -a "$LOG_SCRIPT"
@@ -1268,7 +1268,7 @@ script_timer_two() {
 	script_logs
 	RUNNING_SERVERS="0"
 	IFS=","
-	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager $SERVICE@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
+	for SERVER_SERVICE in $(systemctl --user list-units -all --no-legend --no-pager --plain $SERVICE_NAME@*.service | awk '{print $1}' | tr "\\n" "," | sed 's/,$//'); do
 		SERVER_NUMBER=$(echo $SERVER_SERVICE | awk -F '@' '{print $2}' | awk -F '.service' '{print $1}')
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVER_SERVICE)" == "inactive" ]]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Status) Server $SERVER_NUMBER is not running." | tee -a "$LOG_SCRIPT"
