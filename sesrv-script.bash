@@ -21,7 +21,7 @@
 
 #Basics
 export NAME="SeSrv" #Name of the tmux session
-export VERSION="1.6-3" #Package and script version
+export VERSION="1.6-4" #Package and script version
 
 #Server configuration
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log
@@ -350,8 +350,8 @@ script_reload_services() {
 
 #---------------------------
 
-#Systemd service sends notification if notifications for start enabled
-script_send_notification_start_initialized() {
+#Pre-start functions to be called by the systemd service
+script_prestart() {
 	script_logs
 	if [[ "$EMAIL_START" == "1" ]]; then
 		mail -r "$EMAIL_SENDER ($NAME-$1)" -s "Notification: Server startup $1" $EMAIL_RECIPIENT <<- EOF
@@ -364,12 +364,20 @@ script_send_notification_start_initialized() {
 		done < $CONFIG_DIR/discord_webhooks.txt
 	fi
 	echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Start) Server startup for $1 was initialized." | tee -a "$LOG_SCRIPT"
+
+	if [[ "$TMPFS_ENABLE" == "1" ]]; then
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Start) Sync from disk to tmpfs for $1 has been initiated." | tee -a "$LOG_SCRIPT"
+		if [ -d "$SRV_DIR/$WINE_PREFIX_GAME_CONFIG/$1" ]; then
+			rsync -aAX --info=progress2 $SRV_DIR/$WINE_PREFIX_GAME_CONFIG/$1/ $TMPFS_DIR/$WINE_PREFIX_GAME_CONFIG/$1
+		fi
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Start) Sync from disk to tmpfs for $1 complete." | tee -a "$LOG_SCRIPT"
+	fi
 }
 
 #---------------------------
 
-#Systemd service sends notification if notifications for start enabled
-script_send_notification_start_complete() {
+#Post-start functions to be called by the systemd service
+script_poststart() {
 	script_logs
 	if [[ "$EMAIL_START" == "1" ]]; then
 		mail -r "$EMAIL_SENDER ($NAME-$1)" -s "Notification: Server startup $1" $EMAIL_RECIPIENT <<- EOF
@@ -386,8 +394,8 @@ script_send_notification_start_complete() {
 
 #---------------------------
 
-#Systemd service sends notification if notifications for stop enabled
-script_send_notification_stop_initialized() {
+#Pre-stop functions to be called by the systemd service
+script_prestop() {
 	script_logs
 	if [[ "$EMAIL_STOP" == "1" ]]; then
 		mail -r "$EMAIL_SENDER ($NAME-$1)" -s "Notification: Server shutdown $1" $EMAIL_RECIPIENT <<- EOF
@@ -404,9 +412,41 @@ script_send_notification_stop_initialized() {
 
 #---------------------------
 
-#Systemd service sends notification if notifications for stop enabled
-script_send_notification_stop_complete() {
+#Post-stop functions to be called by the systemd service
+script_poststop() {
 	script_logs
+
+	#Check if the server is still running, if it is wait for it to stop.
+	while true; do
+		tmux -L $SERVICE_NAME-$1-tmux.sock has-session -t $NAME 2>/dev/null
+		if [ $? -eq 1 ]; then
+			break
+		fi
+		sleep 1
+	done
+
+	if [[ "$TMPFS_ENABLE" == "1" ]]; then
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Start) Sync from tmpfs to disk for $1 has been initiated." | tee -a "$LOG_SCRIPT"
+		if [ -f "$TMPFS_DIR/$WINE_PREFIX_GAME_CONFIG/server_$1.json" ]; then
+			rsync -aAX --info=progress2 $TMPFS_DIR/$WINE_PREFIX_GAME_CONFIG/$1/ $SRV_DIR/$WINE_PREFIX_GAME_CONFIG/$1
+		fi
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Start) Sync from tmpfs to disk for $1 complete." | tee -a "$LOG_SCRIPT"
+	fi
+
+	if [ -f "/tmp/$SERVICE_NAME-$1-tmux.log" ]; then
+		rm /tmp/$SERVICE_NAME-$1-tmux.log
+	fi
+
+	if [ -f "/tmp/$SERVICE_NAME-$1-tmux.conf" ]; then
+		rm /tmp/$SERVICE_NAME-$1-tmux.conf
+	fi
+
+	if [ -f "$LOG_DIR_ALL/$SERVICE_NAME-wine-$1.log" ]; then
+		mv $LOG_DIR_ALL/$SERVICE_NAME-wine-$1.log $LOG_DIR/$SERVICE_NAME-wine-$1-$(date +"%Y-%m-%d_%H-%M").log
+	else
+		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Move wine log) Nothing to move." | tee -a "$LOG_SCRIPT"
+	fi
+
 	if [[ "$EMAIL_STOP" == "1" ]]; then
 		mail -r "$EMAIL_SENDER ($NAME-$1)" -s "Notification: Server shutdown $1" $EMAIL_RECIPIENT <<- EOF
 		Server shutdown was complete at $(date +"%d.%m.%Y %H:%M:%S")
@@ -470,25 +510,13 @@ script_send_notification_crash() {
 
 #---------------------------
 
-#Move the wine log and add date and time to it after service shutdown
-script_move_wine_log() {
-	script_logs
-	if [ -f "$LOG_DIR_ALL/$SERVICE_NAME-wine-$1.log" ]; then
-		mv $LOG_DIR_ALL/$SERVICE_NAME-wine-$1.log $LOG_DIR/$SERVICE_NAME-wine-$1-$(date +"%Y-%m-%d_%H-%M").log
-	else
-		echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Move wine log) Nothing to move." | tee -a "$LOG_SCRIPT"
-	fi
-}
-
-#---------------------------
-
 #Sync server files from ramdisk to hdd/ssd
 script_sync() {
 	script_logs
 	if [[ "$TMPFS_ENABLE" == "1" ]]; then
 		if [[ "$(systemctl --user show -p ActiveState --value $SERVICE)" == "active" ]]; then
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Sync) Sync from tmpfs to disk has been initiated." | tee -a "$LOG_SCRIPT"
-			rsync -aAXv --info=progress2 $TMPFS_DIR/ $SRV_DIR #| sed -e "s/^/$(date +"%Y-%m-%d %H:%M:%S") [$NAME] [INFO] (Sync) Syncing: /" | tee -a "$LOG_SCRIPT"
+			rsync -aAX --info=progress2 $TMPFS_DIR/ $SRV_DIR #| sed -e "s/^/$(date +"%Y-%m-%d %H:%M:%S") [$NAME] [INFO] (Sync) Syncing: /" | tee -a "$LOG_SCRIPT"
 			sleep 1
 			echo "$(date +"%Y-%m-%d %H:%M:%S") [$VERSION] [$NAME] [INFO] (Sync) Sync from tmpfs to disk has been completed." | tee -a "$LOG_SCRIPT"
 		fi
@@ -973,7 +1001,7 @@ script_update() {
 		sleep 1
 		
 		if [[ "$TMPFS_ENABLE" == "1" ]]; then
-			rsync -aAXv --info=progress2 $TMPFS_DIR/ $SRV_DIR
+			rsync -aAX --info=progress2 $TMPFS_DIR/ $SRV_DIR
 			rm -rf $TMPFS_DIR/$WINE_PREFIX_GAME_DIR
 		fi
 		
@@ -991,7 +1019,7 @@ script_update() {
 		
 		if [[ "$TMPFS_ENABLE" == "1" ]]; then
 			mkdir -p $TMPFS_DIR/$WINE_PREFIX_GAME_DIR
-			rsync -aAXv --info=progress2 $SRV_DIR/ $TMPFS_DIR
+			rsync -aAX --info=progress2 $SRV_DIR/ $TMPFS_DIR
 		fi
 		
 		for SERVER_SERVICE in "${WAS_ACTIVE[@]}"; do
@@ -1044,7 +1072,7 @@ script_verify_game_integrity() {
 	sleep 1
 	
 	if [[ "$TMPFS_ENABLE" == "1" ]]; then
-		rsync -aAXv --info=progress2 $TMPFS_DIR/ $SRV_DIR
+		rsync -aAX --info=progress2 $TMPFS_DIR/ $SRV_DIR
 		rm -rf $TMPFS_DIR/$WINE_PREFIX_GAME_DIR
 	fi
 	
@@ -1058,7 +1086,7 @@ script_verify_game_integrity() {
 	
 	if [[ "$TMPFS_ENABLE" == "1" ]]; then
 		mkdir -p $TMPFS_DIR/$WINE_PREFIX_GAME_DIR
-		rsync -aAXv --info=progress2 $SRV_DIR/ $TMPFS_DIR
+		rsync -aAX --info=progress2 $SRV_DIR/ $TMPFS_DIR
 	fi
 	
 	for SERVER_SERVICE in "${WAS_ACTIVE[@]}"; do
@@ -1785,7 +1813,7 @@ script_config_script() {
 #---------------------------
 
 #Do not allow for another instance of this script to run to prevent data loss
-if [[ "send_notification_start_initialized" != "$1" ]] && [[ "send_notification_start_complete" != "$1" ]] && [[ "send_notification_stop_initialized" != "$1" ]] && [[ "send_notification_stop_complete" != "$1" ]] && [[ "send_notification_crash" != "$1" ]] && [[ "move_wine_log" != "$1" ]] && [[ "server_tmux_install" != "$1" ]] && [[ "server_tmux_commands_install" != "$1" ]] && [[ "attach" != "$1" ]] && [[ "attach_commands" != "$1" ]] && [[ "status" != "$1" ]]; then
+if [[ "pre-start" != "$1" ]] && [[ "post-start" != "$1" ]] && [[ "pre-stop" != "$1" ]] && [[ "post-stop" != "$1" ]] && [[ "send_notification_crash" != "$1" ]] && [[ "server_tmux_install" != "$1" ]] && [[ "attach" != "$1" ]] && [[ "status" != "$1" ]]; then
 	SCRIPT_PID_CHECK=$(basename -- "$0")
 	if pidof -x "$SCRIPT_PID_CHECK" -o $$ > /dev/null; then
 		echo "An another instance of this script is already running, please clear all the sessions of this script before starting a new session"
@@ -1959,20 +1987,17 @@ case "$1" in
 		;;
 #---------------------------
 #Hidden functions meant for systemd service use
-	move_wine_log)
-		script_move_wine_log $2
+	pre-start)
+		script_prestart $2
 		;;
-	send_notification_start_initialized)
-		script_send_notification_start_initialized $2
+	post-start)
+		script_poststart $2
 		;;
-	send_notification_start_complete)
-		script_send_notification_start_complete $2
+	pre-stop)
+		script_prestop $2
 		;;
-	send_notification_stop_initialized)
-		script_send_notification_stop_initialized $2
-		;;
-	send_notification_stop_complete)
-		script_send_notification_stop_complete $2
+	post-stop)
+		script_poststop $2
 		;;
 	send_notification_crash)
 		script_send_notification_crash $2
