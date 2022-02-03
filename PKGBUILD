@@ -1,8 +1,22 @@
-# Maintainer: 7thCore
+#    Copyright (C) 2022 7thCore
+#    This file is part of IsRSrv-Script.
+#
+#    IsRSrv-Script is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    IsRSrv-Script is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pkgname=sesrv-script
 pkgver=1.6
-pkgrel=4
+pkgrel=5
 pkgdesc='Space Engineers server script for running the server on linux with wine compatibility layer.'
 arch=('x86_64')
 license=('GPL3')
@@ -58,15 +72,15 @@ source=('bash_profile'
         'sesrv-timer-2.timer'
         'sesrv-tmpfs@.service')
 sha256sums=('f1e2f643b81b27d16fe79e0563e39c597ce42621ae7c2433fd5b70f1eeab5d63'
-            'e22f1e6136226a5d8bf32cf9f915e7c33aee09260f2adedaf4bf2a131a40d6c3'
+            'fcd8a812f62872f8feb184ba276d0d7f9a37140d4777cf05891ff893eb39b385'
             'df35121cf2fd1f6aaa79f344746f48ca5c5fbbffdc2a2b39415305342e72dddd'
-            '3f1575a53ece90f21feb9ed714e99f0b7e70338d28c8e2e134efdd0c1f7a28c6'
-            '82cd039603da06baf8ac9ffffe7c06e6cdb87870e8ee60ee6fc48e0c31db8313'
+            '51ec1ddf2acab607035798ed4f24ef9901923b085e4e85935062bf6fe85c9f44'
+            '225fd6b39d58152e7897a54b1ef6d71fe71e822c51d228f441151912ce60f692'
             'a079bbe8c972f6654d9c091f2968960c9a992b189af8aadca706cd12f3c05db9'
             '017efdf5547402d13b73d3d206387ac689b6aa9b07f82a5fa5bb68e7042d46fb'
             '05676f16c87f9bfff4d998a46d640d69156d634be370b2592dd769686cab37fa'
             '537ad490a1e5241048e2b3f8beeb2dec1770024adddc5d46b2ed73c08d6ee3f6'
-            '2dcf8a7b154955c5987b425d903ea63db5c0953742fc37c879b9d51838bbd5e2')
+            'bc81a05bd2a471ea70db3ade952221b1fd2fcdb0f40cd6f4c1dc524cd773423f')
 
 package() {
   install -d -m0755 "${pkgdir}/usr/bin"

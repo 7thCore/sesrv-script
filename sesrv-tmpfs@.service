@@ -18,7 +18,7 @@
 Description=SeSrv TmpFs Server Service
 Requires=sesrv-sync-tmpfs.service
 After=network.target srv-sesrv-tmpfs.mount sesrv-sync-tmpfs.service
-Conflicts=sesrv.service
+Conflicts=sesrv@%i.service
 StartLimitBurst=3
 StartLimitIntervalSec=300
 StartLimitAction=none
@@ -28,14 +28,13 @@ OnFailure=sesrv-send-notification@%i.service
 Type=forking
 KillMode=none
 WorkingDirectory=/srv/sesrv/tmpfs/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64
-ExecStartPre=/usr/bin/sesrv-script pre-start %i
+ExecStartPre=/usr/bin/sesrv-script pre-start %i tmpfs
 ExecStartPre=/usr/bin/sesrv-script server_tmux_install %i
-ExecStartPre=/usr/bin/rsync -aAXv --info=progress /srv/sesrv/server/drive_c/users/sesrv/Application Data/SpaceEngineersDedicated/%i/ /srv/sesrv/tmpfs/drive_c/users/sesrv/Application Data/SpaceEngineersDedicated/%i
-ExecStart=/usr/bin/tmux -f /tmp/%u-%i-tmux.conf -L %u-%i-tmux.sock new-session -d -s SeSrv 'env WINEARCH=win64 WINEDEBUG=warn+heap WINEPREFIX=/srv/sesrv/tmpfs wine /srv/sesrv/tmpfs/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64/SpaceEngineersDedicated.exe -console -path "C:\x5cusers\x5c%u\x5cApplication Data\x5cSpaceEngineersDedicated\x5c%i" 2> /srv/sesrv/logs/sesrv-wine-%i.log'
+ExecStart=/usr/bin/tmux -f /tmp/%u-%i-tmux.conf -L %u-%i-tmux.sock new-session -d -s SeSrv 'env WINEARCH=win64 WINEDEBUG=warn+heap WINEPREFIX=/srv/sesrv/tmpfs wine /srv/sesrv/tmpfs/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64/SpaceEngineersDedicated.exe -console -path "C:\x5cGames\x5cSpaceEngineersDedicated_Save\x5c%i" 2> /tmp/isrsrv-wine-%i.log'
 ExecStartPost=/usr/bin/sesrv-script post-start %i
 ExecStop=/usr/bin/sesrv-script pre-stop %i
 ExecStop=/usr/bin/tmux -L %u-%i-tmux.sock send-keys -t SeSrv.0 C-c
-ExecStopPost=/usr/bin/sesrv-script post-stop %i
+ExecStopPost=/usr/bin/sesrv-script post-stop %i tmpfs
 TimeoutStartSec=infinity
 TimeoutStopSec=120
 RestartSec=10
