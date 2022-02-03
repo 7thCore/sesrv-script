@@ -1,5 +1,5 @@
 Package: sesrv-script
-Version: 1.6-4
+Version: 1.6-5
 Architecture: amd64
 Essential: no
 Priority: optional
