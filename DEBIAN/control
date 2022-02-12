@@ -1,8 +1,8 @@
 Package: sesrv-script
-Version: 1.6-5
+Version: 1.6-6
 Architecture: amd64
 Essential: no
 Priority: optional
-Depends: bash, coreutils, sudo, libpam-systemd, grep, sed, gawk, curl, rsync, wget, findutils, tmux, zip, unzip, p7zip, postfix, cabextract, xvfb, steamcmd, winehq-staging
+Depends: bash, coreutils, sudo, libpam-systemd, grep, sed, gawk, curl, rsync, wget, findutils, tmux, zip, unzip, p7zip, postfix, s-nail, cabextract, xvfb, steamcmd, winehq-staging
 Maintainer: 7thCore
 Description: Space Engineers server script for running the server on linux with wine compatibility layer.
