@@ -21,7 +21,7 @@
 
 #Static script variables
 export NAME="SeSrv" #Name of the tmux session.
-export VERSION="1.6-6" #Package and script version.
+export VERSION="1.6-7" #Package and script version.
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log.
 export LOG_DIR="/srv/$SERVICE_NAME/logs" #Location of the script's log files.
 export LOG_STRUCTURE="$LOG_DIR/$(date +"%Y")/$(date +"%m")/$(date +"%d")" #Folder structure of the script's log files.
@@ -460,6 +460,7 @@ script_sync() {
 
 #--------------------------
 
+#Checks the space occupied on the tmpfs partition and if it's over the user designated value, shuts down tmpfs servers
 script_tmpfs_space_check() {
 	script_logs
 	CURRENT_TMPFS_SPACE=$(df -H | grep "$TMPFS_DIR" | awk '{print $5}' | cut -d'%' -f1)
@@ -1188,13 +1189,13 @@ script_diagnostics() {
 		echo "Script present: No"
 	fi
 
-	if [ -d "/srv/$SERVICE_NAME/config" ]; then
+	if [ -d "$CONFIG_DIR" ]; then
 		echo "Configuration folder present: Yes"
 	else
 		echo "Configuration folder present: No"
 	fi
 
-	if [ -d "/srv/$SERVICE_NAME/backups" ]; then
+	if [ -d "$BCKP_DIR" ]; then
 		echo "Backups folder present: Yes"
 	else
 		echo "Backups folder present: No"
@@ -1206,7 +1207,7 @@ script_diagnostics() {
 		echo "Logs folder present: No"
 	fi
 
-	if [ -d "/srv/$SERVICE_NAME/server" ]; then
+	if [ -d "$SRV_DIR" ]; then
 		echo "Server folder present: Yes"
 		echo ""
 		echo "List of installed applications in the prefix:"
@@ -1707,14 +1708,14 @@ script_config_email() {
 	fi
 
 	echo "Writing configuration file..."
-	echo 'email_sender='"$INSTALL_EMAIL_SENDER" > /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_recipient='"$INSTALL_EMAIL_RECIPIENT" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_update='"$INSTALL_EMAIL_UPDATE" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_start='"$INSTALL_EMAIL_START" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_stop='"$INSTALL_EMAIL_STOP" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_crash='"$INSTALL_EMAIL_CRASH" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	echo 'email_tmpfs_space='"$INSTALL_EMAIL_CRASH" >> /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
-	chown $SERVICE_NAME:$SERVICE_NAME /srv/$SERVICE_NAME/config/$SERVICE_NAME-email.conf
+	echo 'email_sender='"$INSTALL_EMAIL_SENDER" > $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_recipient='"$INSTALL_EMAIL_RECIPIENT" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_update='"$INSTALL_EMAIL_UPDATE" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_start='"$INSTALL_EMAIL_START" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_stop='"$INSTALL_EMAIL_STOP" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_crash='"$INSTALL_EMAIL_CRASH" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	echo 'email_tmpfs_space='"$INSTALL_EMAIL_CRASH" >> $CONFIG_DIR/$SERVICE_NAME-email.conf
+	chown $SERVICE_NAME:$SERVICE_NAME $CONFIG_DIR/$SERVICE_NAME-email.conf
 	echo "Done"
 }
 
