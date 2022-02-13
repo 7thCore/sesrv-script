@@ -1,6 +1,5 @@
 getent group sesrv >/dev/null || groupadd --system sesrv
-getent passwd sesrv >/dev/null || useradd --system -g sesrv \
-  -d /srv/sesrv/ -s /bin/bash sesrv
+getent passwd sesrv >/dev/null || useradd --system -g sesrv -d /srv/sesrv/ -s /bin/bash sesrv
 
 install -dm700 srv/sesrv/backups
 install -dm700 srv/sesrv/config
