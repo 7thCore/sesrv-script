@@ -1,9 +1,19 @@
 post_install() {
-  getent group sesrv >/dev/null || groupadd --system sesrv
-  getent passwd sesrv >/dev/null || useradd --system -g sesrv \
-    -d /srv/sesrv/ -s /bin/bash sesrv
+	getent group sesrv >/dev/null || groupadd --system sesrv
+	getent passwd sesrv >/dev/null || useradd --system -g sesrv -d /srv/sesrv/ -s /bin/bash sesrv
 
-  chown -R sesrv:sesrv srv/sesrv
-  loginctl enable-linger sesrv
-  systemctl start user@$(id -u sesrv).service
+	chown -R sesrv:sesrv srv/sesrv
+	loginctl enable-linger sesrv
+	systemctl start user@$(id -u sesrv).service
+}
+
+post_upgrade() {
+	chown -R sesrv:sesrv srv/sesrv/.config/systemd/user
+	chown sesrv:sesrv srv/sesrv/*
+}
+
+post_remove() {
+	loginctl disable-linger sesrv
+	systemctl stop user@$(id -u sesrv).service
+	userdel --remove sesrv
 }
