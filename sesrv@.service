@@ -32,6 +32,8 @@ ExecStartPre=/usr/bin/sesrv-script server_tmux_install %i
 ExecStart=/usr/bin/tmux -f /tmp/%u-%i-tmux.conf -L %u-%i-tmux.sock new-session -d -s SeSrv 'env WINEARCH=win64 WINEDEBUG=warn+heap WINEPREFIX=/srv/sesrv/server wine /srv/sesrv/server/drive_c/Games/SpaceEngineersDedicated/DedicatedServer64/SpaceEngineersDedicated.exe -console -path "C:\x5cGames\x5cSpaceEngineersDedicated_Save\x5c%i" 2> /tmp/isrsrv-wine-%i.log'
 ExecStop=/usr/bin/sesrv-script pre-stop %i
 ExecStop=/usr/bin/tmux -L %u-%i-tmux.sock send-keys -t SeSrv.0 C-c
+ExecStop=/usr/bin/sleep 10
+ExecStop=/usr/bin/tmux -L %u-%i-tmux.sock send-keys -t SeSrv.0 ENTER
 ExecStopPost=/usr/bin/sesrv-script post-stop %i
 TimeoutStartSec=infinity
 TimeoutStopSec=120

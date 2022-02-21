@@ -21,7 +21,7 @@
 
 #Static script variables
 export NAME="SeSrv" #Name of the tmux session.
-export VERSION="1.6-9" #Package and script version.
+export VERSION="1.7-1" #Package and script version.
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log.
 export LOG_DIR="/srv/$SERVICE_NAME/logs" #Location of the script's log files.
 export LOG_STRUCTURE="$LOG_DIR/$(date +"%Y")/$(date +"%m")/$(date +"%d")" #Folder structure of the script's log files.
@@ -1390,6 +1390,7 @@ script_server_tmux_install() {
 			bind-key r source-file /tmp/$SERVICE_NAME-$1-tmux.conf \; display-message "Config reloaded!"
 
 			set-hook -g session-created 'resize-window -y 24 -x 10000'
+			set-hook -g session-created "pipe-pane -o 'tee >> /tmp/$SERVICE_NAME-$1-tmux.log'"
 			set-hook -g client-attached 'resize-window -y 24 -x 10000'
 			set-hook -g client-detached 'resize-window -y 24 -x 10000'
 			set-hook -g client-resized 'resize-window -y 24 -x 10000'
