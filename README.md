@@ -12,6 +12,6 @@ Check the wiki for detailed instructions:
 
 Pre-built packages available for Arch and Debian based distributions:
 
-[Pre-built packages](7thCore/pkg-repo/README.md)
+[Pre-built packages](https://github.com/7thCore/pkg-repo)
 
 -------------------------
