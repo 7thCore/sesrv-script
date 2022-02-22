@@ -10,7 +10,7 @@ Check the wiki for detailed instructions:
 
 -------------------------
 
-Pre-built packages available for Arch and Debian based distributions:
+Pre-built packages available in repository for Arch and Debian based distributions:
 
 [Pre-built packages](https://github.com/7thCore/pkg-repo)
 
