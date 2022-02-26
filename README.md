@@ -15,3 +15,11 @@ Pre-built packages available for Arch and Debian based distributions:
 [Pre-built packages](built-packages)
 
 -------------------------
+
+# Donation
+
+If this project help you in any way, please consider donating.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=7DNGNW7TTXHFY)
+
+-------------------------
