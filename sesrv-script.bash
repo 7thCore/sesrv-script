@@ -21,7 +21,7 @@
 
 #Static script variables
 export NAME="SeSrv" #Name of the tmux session.
-export VERSION="1.7-2" #Package and script version.
+export VERSION="1.7-3" #Package and script version.
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log.
 export LOG_DIR="/srv/$SERVICE_NAME/logs" #Location of the script's log files.
 export LOG_STRUCTURE="$LOG_DIR/$(date +"%Y")/$(date +"%m")/$(date +"%d")" #Folder structure of the script's log files.
