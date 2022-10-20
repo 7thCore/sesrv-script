@@ -21,7 +21,7 @@
 
 #Static script variables
 export NAME="SeSrv" #Name of the tmux session.
-export VERSION="1.7-3" #Package and script version.
+export VERSION="1.7-4" #Package and script version.
 export SERVICE_NAME="sesrv" #Name of the service files, user, script and script log.
 export LOG_DIR="/srv/$SERVICE_NAME/logs" #Location of the script's log files.
 export LOG_STRUCTURE="$LOG_DIR/$(date +"%Y")/$(date +"%m")/$(date +"%d")" #Folder structure of the script's log files.
@@ -1083,7 +1083,7 @@ script_timer_one() {
 		script_remove_old_files
 		script_tmpfs_space_check
 		script_sync
-		script_autobackup
+		script_backup
 		script_update
 	fi
 }
@@ -1982,7 +1982,7 @@ case "$1" in
 	echo -e "${GREEN}Configuration and installation${RED}: ${GREEN}config_script, config_steam, config_discord, config_email, config_tmpfs${NC}"
 	echo -e "${GREEN}Server services managment${RED}: ${GREEN}add_server, remove_server, enable_services, disable_services, reload_services${NC}"
 	echo -e "${GREEN}Server and console managment${RED}: ${GREEN}start, start_no_err, stop,restart, sync, attach${NC}"
-	echo -e "${GREEN}Backup managment${RED}: ${GREEN}backup, autobackup, delete_backup${NC}"
+	echo -e "${GREEN}Backup managment${RED}: ${GREEN}backup${NC}"
 	echo -e "${GREEN}Steam managment${RED}: ${GREEN}update, verify, change_branch${NC}"
 	echo -e "${GREEN}Wine functions${RED}: ${GREEN}rebuild_prefix${NC}"
 	exit 1
