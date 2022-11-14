@@ -16,7 +16,7 @@
 
 pkgname=sesrv-script
 pkgver=1.7
-pkgrel=4
+pkgrel=5
 pkgdesc='Space Engineers server script for running the server on linux with wine compatibility layer.'
 arch=('x86_64')
 license=('GPL3')
@@ -73,7 +73,7 @@ source=('bash_profile'
         'sesrv-timer-2.timer'
         'sesrv-tmpfs@.service')
 sha256sums=('f1e2f643b81b27d16fe79e0563e39c597ce42621ae7c2433fd5b70f1eeab5d63'
-            '0ba0e2eb18f9474b6c014a0ea227af6ec68e9a34398c4d7041809e0188378672'
+            '58823e92b4294736526c2dc778011dc533db1c1b9244467b2c95036c5fc4f9f9'
             'df35121cf2fd1f6aaa79f344746f48ca5c5fbbffdc2a2b39415305342e72dddd'
             '64f6e963e4891e32ae42467efb4399377766f6908f84a138f836fcedae02f083'
             '225fd6b39d58152e7897a54b1ef6d71fe71e822c51d228f441151912ce60f692'
